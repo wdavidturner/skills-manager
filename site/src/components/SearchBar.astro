@@ -1,0 +1,103 @@
+---
+interface Props {
+  placeholder?: string;
+}
+
+const { placeholder = "Search skills..." } = Astro.props;
+---
+
+<div class="search-container">
+  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"></circle>
+    <path d="m21 21-4.3-4.3"></path>
+  </svg>
+  <input
+    type="search"
+    id="skill-search"
+    class="search-input"
+    placeholder={placeholder}
+    autocomplete="off"
+  />
+  <button type="button" id="clear-search" class="clear-btn" aria-label="Clear search" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6 6 18"></path>
+      <path d="m6 6 12 12"></path>
+    </svg>
+  </button>
+</div>
+
+<style>
+  .search-container {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: var(--spacing-3);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--color-neutral-400);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 var(--spacing-10);
+    padding-left: var(--spacing-10);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--color-neutral-900);
+    background-color: white;
+    border: 1px solid var(--color-neutral-300);
+    border-radius: var(--radius-lg);
+    transition: all 0.15s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-primary-100);
+  }
+
+  .search-input::placeholder {
+    color: var(--color-neutral-400);
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: var(--spacing-2);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--color-neutral-100);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    color: var(--color-neutral-500);
+    transition: all 0.15s ease;
+  }
+
+  .clear-btn:hover {
+    background: var(--color-neutral-200);
+    color: var(--color-neutral-700);
+  }
+
+  .clear-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .clear-btn[hidden] {
+    display: none;
+  }
+</style>

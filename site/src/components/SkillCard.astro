@@ -1,0 +1,108 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  filename: string;
+  lastModified: string;
+}
+
+const { name, description, filename, lastModified } = Astro.props;
+
+// Format the date
+const formattedDate = new Date(lastModified).toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+});
+---
+
+<article class="skill-card card" data-name={name.toLowerCase()} data-description={description.toLowerCase()}>
+  <div class="card-content">
+    <div class="card-header">
+      <h2 class="skill-name">{name}</h2>
+      <span class="skill-date">{formattedDate}</span>
+    </div>
+    <p class="skill-description">{description}</p>
+    <div class="card-footer">
+      <a href={`/skills/${filename}`} download={filename} class="btn btn-primary download-btn">
+        <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download
+      </a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .skill-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--spacing-6);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+  }
+
+  .skill-name {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-neutral-900);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .skill-date {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    color: var(--color-neutral-500);
+    white-space: nowrap;
+  }
+
+  .skill-description {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-neutral-600);
+    line-height: 1.6;
+    margin: 0;
+    /* Limit to roughly 4 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-footer {
+    margin-top: var(--spacing-4);
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--color-neutral-100);
+  }
+
+  .download-btn {
+    width: 100%;
+  }
+
+  .download-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Hidden state for filtered cards */
+  .skill-card[hidden] {
+    display: none;
+  }
+</style>

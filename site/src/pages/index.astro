@@ -1,0 +1,244 @@
+---
+import SearchBar from '../components/SearchBar.astro';
+import SkillCard from '../components/SkillCard.astro';
+import '../styles/global.css';
+
+// Import skills data at build time
+import skillsData from '../skills-data.json';
+
+interface Skill {
+  name: string;
+  description: string;
+  filename: string;
+  lastModified: string;
+  sizeBytes: number;
+}
+
+const skills: Skill[] = skillsData;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Browse and download your Claude Skills" />
+    <title>Skills Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main class="main">
+      <div class="container">
+        <header class="header">
+          <h1 class="title">Skills Library</h1>
+          <p class="subtitle">Browse and download your Claude Skills</p>
+        </header>
+
+        <div class="toolbar">
+          <SearchBar placeholder="Search skills..." />
+          <div class="skill-count">
+            <span id="visible-count">{skills.length}</span> of {skills.length} skills
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 grid-cols-2 grid-cols-3" id="skills-grid">
+          {skills.map((skill) => (
+            <SkillCard
+              name={skill.name}
+              description={skill.description}
+              filename={skill.filename}
+              lastModified={skill.lastModified}
+            />
+          ))}
+        </div>
+
+        <div id="no-results" class="no-results" hidden>
+          <svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+            <path d="M8 8l6 6"></path>
+          </svg>
+          <p class="no-results-text">No skills match your search</p>
+          <button type="button" class="btn btn-secondary" id="clear-search-btn">Clear search</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p class="footer-text">
+          Download skills as <code>.skill</code> files and upload them to
+          <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a> via Settings &rarr; Features &rarr; Skills.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById('skill-search') as HTMLInputElement;
+      const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
+      const clearSearchBtnMain = document.getElementById('clear-search-btn') as HTMLButtonElement;
+      const skillsGrid = document.getElementById('skills-grid') as HTMLElement;
+      const noResults = document.getElementById('no-results') as HTMLElement;
+      const visibleCount = document.getElementById('visible-count') as HTMLElement;
+      const cards = skillsGrid.querySelectorAll('.skill-card') as NodeListOf<HTMLElement>;
+
+      function filterSkills(query: string) {
+        const normalizedQuery = query.toLowerCase().trim();
+        let visibleCards = 0;
+
+        cards.forEach((card) => {
+          const name = card.dataset.name || '';
+          const description = card.dataset.description || '';
+          const matches = normalizedQuery === '' ||
+            name.includes(normalizedQuery) ||
+            description.includes(normalizedQuery);
+
+          card.hidden = !matches;
+          if (matches) visibleCards++;
+        });
+
+        visibleCount.textContent = String(visibleCards);
+        noResults.hidden = visibleCards > 0;
+        skillsGrid.hidden = visibleCards === 0;
+
+        // Show/hide clear button
+        if (clearSearchBtn) {
+          clearSearchBtn.hidden = normalizedQuery === '';
+        }
+      }
+
+      function clearSearch() {
+        if (searchInput) {
+          searchInput.value = '';
+          filterSkills('');
+          searchInput.focus();
+        }
+      }
+
+      // Event listeners
+      searchInput?.addEventListener('input', (e) => {
+        filterSkills((e.target as HTMLInputElement).value);
+      });
+
+      clearSearchBtn?.addEventListener('click', clearSearch);
+      clearSearchBtnMain?.addEventListener('click', clearSearch);
+
+      // Handle keyboard shortcut (Cmd/Ctrl + K to focus search)
+      document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          searchInput?.focus();
+          searchInput?.select();
+        }
+        // Escape to clear search when focused
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+          clearSearch();
+        }
+      });
+    </script>
+
+    <style>
+      .main {
+        min-height: calc(100vh - 80px);
+        padding: var(--spacing-12) 0 var(--spacing-16);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: var(--spacing-10);
+      }
+
+      .title {
+        font-size: var(--font-size-4xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-neutral-900);
+        margin-bottom: var(--spacing-2);
+      }
+
+      .subtitle {
+        font-size: var(--font-size-lg);
+        color: var(--color-neutral-500);
+        margin: 0;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-4);
+        align-items: center;
+        margin-bottom: var(--spacing-8);
+      }
+
+      @media (min-width: 640px) {
+        .toolbar {
+          flex-direction: row;
+          justify-content: space-between;
+        }
+      }
+
+      .skill-count {
+        font-size: var(--font-size-sm);
+        color: var(--color-neutral-500);
+      }
+
+      .no-results {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-16) var(--spacing-6);
+        text-align: center;
+      }
+
+      .no-results[hidden] {
+        display: none;
+      }
+
+      .no-results-icon {
+        width: 64px;
+        height: 64px;
+        color: var(--color-neutral-300);
+        margin-bottom: var(--spacing-4);
+      }
+
+      .no-results-text {
+        font-size: var(--font-size-lg);
+        color: var(--color-neutral-500);
+        margin: 0 0 var(--spacing-4);
+      }
+
+      .footer {
+        padding: var(--spacing-6) 0;
+        border-top: 1px solid var(--color-neutral-200);
+        background: white;
+      }
+
+      .footer-text {
+        font-size: var(--font-size-sm);
+        color: var(--color-neutral-500);
+        text-align: center;
+        margin: 0;
+      }
+
+      .footer-text code {
+        background: var(--color-neutral-100);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-family: ui-monospace, monospace;
+        font-size: var(--font-size-xs);
+      }
+
+      .footer-text a {
+        color: var(--color-primary-600);
+        font-weight: var(--font-weight-medium);
+      }
+
+      .footer-text a:hover {
+        color: var(--color-primary-700);
+      }
+    </style>
+  </body>
+</html>
