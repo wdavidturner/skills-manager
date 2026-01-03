@@ -1,0 +1,395 @@
+---
+import '../styles/global.css';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Upload a Claude Skill to the library" />
+    <title>Upload Skill | Skills Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main class="main">
+      <div class="container">
+        <header class="header">
+          <a href="/" class="back-link">&larr; Back to Library</a>
+          <h1 class="title">Upload Skill</h1>
+          <p class="subtitle">Upload a <code>.skill</code> file to create a pull request</p>
+        </header>
+
+        <div class="upload-card" id="upload-card">
+          <div class="dropzone" id="dropzone">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p class="dropzone-text">Drag and drop your <code>.skill</code> file here</p>
+            <p class="dropzone-or">or</p>
+            <label class="btn btn-primary">
+              Browse Files
+              <input type="file" id="file-input" accept=".skill,.zip" hidden />
+            </label>
+          </div>
+
+          <div class="uploading" id="uploading" hidden>
+            <div class="spinner"></div>
+            <p class="uploading-text">Creating pull request...</p>
+          </div>
+
+          <div class="success" id="success" hidden>
+            <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <h2 class="success-title">Pull Request Created!</h2>
+            <p class="success-text">Your skill has been submitted for review.</p>
+            <a id="pr-link" href="#" class="btn btn-primary" target="_blank" rel="noopener">View Pull Request</a>
+            <button type="button" class="btn btn-secondary" id="upload-another">Upload Another</button>
+          </div>
+
+          <div class="error" id="error" hidden>
+            <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <h2 class="error-title">Upload Failed</h2>
+            <p class="error-text" id="error-message">Something went wrong.</p>
+            <button type="button" class="btn btn-secondary" id="try-again">Try Again</button>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h3>Requirements</h3>
+          <ul>
+            <li>File must be a <code>.skill</code> file (zip format)</li>
+            <li>Must contain a <code>SKILL.md</code> with valid frontmatter</li>
+            <li>Name: lowercase letters, numbers, hyphens (max 64 chars)</li>
+            <li>Description: max 1024 characters</li>
+            <li>File size: max 10MB</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropzone = document.getElementById('dropzone') as HTMLElement;
+      const fileInput = document.getElementById('file-input') as HTMLInputElement;
+      const uploadCard = document.getElementById('upload-card') as HTMLElement;
+      const uploading = document.getElementById('uploading') as HTMLElement;
+      const success = document.getElementById('success') as HTMLElement;
+      const error = document.getElementById('error') as HTMLElement;
+      const prLink = document.getElementById('pr-link') as HTMLAnchorElement;
+      const errorMessage = document.getElementById('error-message') as HTMLElement;
+      const uploadAnother = document.getElementById('upload-another') as HTMLButtonElement;
+      const tryAgain = document.getElementById('try-again') as HTMLButtonElement;
+
+      function showState(state: 'dropzone' | 'uploading' | 'success' | 'error') {
+        dropzone.hidden = state !== 'dropzone';
+        uploading.hidden = state !== 'uploading';
+        success.hidden = state !== 'success';
+        error.hidden = state !== 'error';
+      }
+
+      function reset() {
+        showState('dropzone');
+        fileInput.value = '';
+      }
+
+      async function uploadFile(file: File) {
+        showState('uploading');
+
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || data.error) {
+            throw new Error(data.error || 'Upload failed');
+          }
+
+          prLink.href = data.prUrl;
+          showState('success');
+        } catch (err) {
+          errorMessage.textContent = err instanceof Error ? err.message : 'Upload failed';
+          showState('error');
+        }
+      }
+
+      // File input change
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) uploadFile(file);
+      });
+
+      // Drag and drop
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer?.files[0];
+        if (file) uploadFile(file);
+      });
+
+      // Reset buttons
+      uploadAnother.addEventListener('click', reset);
+      tryAgain.addEventListener('click', reset);
+    </script>
+
+    <style>
+      .main {
+        min-height: 100vh;
+        padding: var(--spacing-12) 0;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: var(--spacing-8);
+      }
+
+      .back-link {
+        display: inline-block;
+        color: var(--color-neutral-500);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-4);
+      }
+
+      .back-link:hover {
+        color: var(--color-primary-600);
+      }
+
+      .title {
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-neutral-900);
+        margin-bottom: var(--spacing-2);
+      }
+
+      .subtitle {
+        font-size: var(--font-size-base);
+        color: var(--color-neutral-500);
+        margin: 0;
+      }
+
+      .subtitle code {
+        background: var(--color-neutral-100);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-family: ui-monospace, monospace;
+        font-size: var(--font-size-sm);
+      }
+
+      .upload-card {
+        max-width: 500px;
+        margin: 0 auto var(--spacing-8);
+        background: white;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-neutral-200);
+        overflow: hidden;
+      }
+
+      .dropzone {
+        padding: var(--spacing-12) var(--spacing-8);
+        text-align: center;
+        border: 2px dashed var(--color-neutral-300);
+        border-radius: var(--radius-lg);
+        margin: var(--spacing-4);
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .dropzone:hover,
+      .dropzone.dragover {
+        border-color: var(--color-primary-500);
+        background: var(--color-primary-50);
+      }
+
+      .upload-icon {
+        width: 48px;
+        height: 48px;
+        color: var(--color-neutral-400);
+        margin-bottom: var(--spacing-4);
+      }
+
+      .dropzone-text {
+        font-size: var(--font-size-base);
+        color: var(--color-neutral-600);
+        margin: 0 0 var(--spacing-2);
+      }
+
+      .dropzone-text code {
+        background: var(--color-neutral-100);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-family: ui-monospace, monospace;
+        font-size: var(--font-size-sm);
+      }
+
+      .dropzone-or {
+        font-size: var(--font-size-sm);
+        color: var(--color-neutral-400);
+        margin: var(--spacing-3) 0;
+      }
+
+      .uploading,
+      .success,
+      .error {
+        padding: var(--spacing-12) var(--spacing-8);
+        text-align: center;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--color-neutral-200);
+        border-top-color: var(--color-primary-600);
+        border-radius: 50%;
+        margin: 0 auto var(--spacing-4);
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .uploading-text {
+        color: var(--color-neutral-600);
+        margin: 0;
+      }
+
+      .success-icon {
+        width: 48px;
+        height: 48px;
+        color: var(--color-primary-600);
+        margin-bottom: var(--spacing-4);
+      }
+
+      .success-title {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-neutral-900);
+        margin: 0 0 var(--spacing-2);
+      }
+
+      .success-text {
+        color: var(--color-neutral-600);
+        margin: 0 0 var(--spacing-6);
+      }
+
+      .error-icon {
+        width: 48px;
+        height: 48px;
+        color: var(--color-danger-500);
+        margin-bottom: var(--spacing-4);
+      }
+
+      .error-title {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-neutral-900);
+        margin: 0 0 var(--spacing-2);
+      }
+
+      .error-text {
+        color: var(--color-danger-600);
+        margin: 0 0 var(--spacing-6);
+      }
+
+      .btn {
+        display: inline-block;
+        padding: var(--spacing-3) var(--spacing-6);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        text-decoration: none;
+        border: none;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--color-primary-600);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--color-primary-700);
+      }
+
+      .btn-secondary {
+        background: var(--color-neutral-100);
+        color: var(--color-neutral-700);
+        margin-left: var(--spacing-2);
+      }
+
+      .btn-secondary:hover {
+        background: var(--color-neutral-200);
+      }
+
+      .info-card {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: var(--spacing-6);
+        background: var(--color-neutral-50);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-neutral-200);
+      }
+
+      .info-card h3 {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-neutral-900);
+        margin: 0 0 var(--spacing-3);
+      }
+
+      .info-card ul {
+        margin: 0;
+        padding-left: var(--spacing-5);
+      }
+
+      .info-card li {
+        font-size: var(--font-size-sm);
+        color: var(--color-neutral-600);
+        margin-bottom: var(--spacing-2);
+      }
+
+      .info-card li:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-card code {
+        background: var(--color-neutral-100);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        font-family: ui-monospace, monospace;
+        font-size: var(--font-size-xs);
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </body>
+</html>

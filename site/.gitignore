@@ -1,6 +1,7 @@
 # Build output
 dist/
 .astro/
+.vercel/
 
 # Generated at build time
 public/skills/

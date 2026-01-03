@@ -10,9 +10,11 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/vercel": "^9.0.2",
     "archiver": "^7.0.1",
     "astro": "^5.16.6",
     "gray-matter": "^4.0.3",
+    "jszip": "^3.10.1",
     "lucide-static": "^0.561.0"
   }
 }
