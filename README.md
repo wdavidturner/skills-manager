@@ -47,6 +47,27 @@ zip -r my-skill.zip my-skill/
 
 Upload the `.zip` to [claude.ai](https://claude.ai) via **Settings → Features → Skills**.
 
+## Installing Skills
+
+You can install skills directly from GitHub using [add-skill](https://github.com/vercel-labs/add-skill):
+
+```
+https://github.com/vercel-labs/add-skill?url=https://github.com/YOUR_USERNAME/YOUR_REPO/tree/main/skills/SKILL_NAME
+```
+
+This opens a page that lets users install the skill to their Claude account with one click.
+
+**To create an install link for your skill:**
+
+1. Push your skills repository to GitHub
+2. Construct the URL: `https://github.com/vercel-labs/add-skill?url=` + your skill's GitHub path
+3. Share the link or add an "Install" badge to your README
+
+**Example:**
+```markdown
+[Install my-skill](https://github.com/vercel-labs/add-skill?url=https://github.com/username/skills-repo/tree/main/skills/my-skill)
+```
+
 ## Your Skills
 
 <!-- Add your skills here. Example format:
